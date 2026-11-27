@@ -258,6 +258,7 @@ public class VideoPlayerModel {
         grabber = new FFmpegFrameGrabber(videoFile);
         grabber.setImageMode(FrameGrabber.ImageMode.COLOR);
         grabber.setSampleMode(FrameGrabber.SampleMode.SHORT);
+        grabber.setAudioStream(0);
         grabber.start();
 
         notifyVideoSizeChanged(grabber.getImageWidth(), grabber.getImageHeight());

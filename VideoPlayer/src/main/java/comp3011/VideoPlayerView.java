@@ -57,6 +57,7 @@ public class VideoPlayerView {
     private final Button forwardFiveButton;
     private final Button stopButton;
     private final Button audioButton;
+    private final Button subtitleButton;
 
     public VideoPlayerView() {
         imageView.setPreserveRatio(true);
@@ -75,6 +76,7 @@ public class VideoPlayerView {
         forwardFiveButton = iconButton(createLoopIcon(true, "5"));
         stopButton = iconButton(createStopIcon());
         audioButton = iconButton(createAudioIcon(false));
+        subtitleButton = iconButton(new Label("CC"));
         setPlaybackControlsDisabled(true);
 
         HBox controls = new HBox(
@@ -85,6 +87,7 @@ public class VideoPlayerView {
                 forwardFiveButton,
                 stopButton,
                 audioButton,
+                subtitleButton,
                 statusLabel);
 
         controls.setPadding(new Insets(10));
@@ -126,6 +129,10 @@ public class VideoPlayerView {
     public Button getAudioButton() {
         return audioButton;
     }
+    
+    public Button getSubtitleButton() {
+    	return subtitleButton;
+    }
 
     public void setStatus(String status) {
         statusLabel.setText(status);
@@ -141,6 +148,10 @@ public class VideoPlayerView {
 
     public void showPauseAction() {
         pausePlayButton.setGraphic(createPauseIcon());
+    }
+    
+    public void showSubtitlesEnabled(boolean enabled) {
+        subtitleButton.setOpacity(enabled ? 1.0 : 0.45);
     }
 
     public void showPlayAction() {

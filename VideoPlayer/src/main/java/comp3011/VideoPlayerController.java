@@ -12,8 +12,10 @@
 package comp3011;
 
 import java.io.File;
+
 import java.util.List;
 import java.util.function.BiConsumer;
+import java.util.ArrayList;
 
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
@@ -33,6 +35,8 @@ public class VideoPlayerController {
     private final VideoPlayerView view;
     private final BiConsumer<Integer, Integer> videoSizeChangedHandler;
     private boolean subtitlesEnabled;
+    private final FrameSubtitler frameSubtitler;
+    private final SubtitleClient subtitleClient = new SubtitleClient();
     
     public VideoPlayerController(
     		boolean subtitlesEnabled,
@@ -41,10 +45,16 @@ public class VideoPlayerController {
             BiConsumer<Integer, Integer> videoSizeChangedHandler) {
         this.view = new VideoPlayerView();
         this.subtitlesEnabled = subtitlesEnabled;
+        frameSubtitler = new FrameSubtitler(subtitlesEnabled);
+
+        List<FrameProcessor> processorsWithSubtitles =
+                new ArrayList<>(frameProcessors);
+
+        processorsWithSubtitles.add(frameSubtitler);
         this.videoSizeChangedHandler = videoSizeChangedHandler;
         model = new VideoPlayerModel(
                 audioEnabled,
-                frameProcessors,
+                processorsWithSubtitles,
                 this::onVideoSizeChanged,
                 this::onFrameReady,
                 this::onStatusChanged,
@@ -57,7 +67,9 @@ public class VideoPlayerController {
         view.getForwardFiveButton().setOnAction(_ -> forwardFiveSeconds());
         view.getStopButton().setOnAction(_ -> stopAndExit());
         view.getAudioButton().setOnAction(_ -> toggleAudioOutput());
+        view.getSubtitleButton().setOnAction(_ -> toggleSubtitles());
         view.showAudioEnabled(model.isAudioOutputEnabled());
+        view.showSubtitlesEnabled(subtitlesEnabled);
     }
 
     public void installKeyboardShortcuts(Scene scene) {
@@ -80,6 +92,9 @@ public class VideoPlayerController {
             } else if (event.getCode() == KeyCode.A) {
                 toggleAudioOutput();
                 event.consume();
+            } else if (event.getCode() == KeyCode.S) {
+                toggleSubtitles();
+                event.consume();
             }
         });
     }
@@ -91,6 +106,47 @@ public class VideoPlayerController {
     public void play(File file) {
         view.setPlaybackControlsDisabled(false);
         model.play(file);
+
+        loadSubtitles(file);
+    }
+    
+    private void loadSubtitles(File file) {
+        Thread.startVirtualThread(() -> {
+            try {
+                SubtitleApiResponse response =
+                        subtitleClient.getSubtitles(file);
+
+                if (response == null || response.segments() == null) {
+                    return;
+                }
+
+                List<SubtitleCue> cues =
+                        response.segments().stream()
+                                .map(segment -> {
+                                    double start = segment.start();
+
+                                    double end = Math.min(
+                                            start + 7.0,
+                                            Math.max(
+                                                    segment.end(),
+                                                    start + 1.0));
+
+                                    return new SubtitleCue(
+                                            start,
+                                            end,
+                                            segment.text());
+                                })
+                                .toList();
+
+                frameSubtitler.setSubtitles(cues);
+
+            } catch (Exception e) {
+                System.err.println(
+                        "Unable to load subtitles: " + e);
+
+                e.printStackTrace();
+            }
+        });
     }
 
     public void shutdown() {
@@ -118,7 +174,9 @@ public class VideoPlayerController {
     }
     
     private void toggleSubtitles() {
-    	subtitlesEnabled =!subtitlesEnabled;
+        subtitlesEnabled = !subtitlesEnabled;
+        frameSubtitler.toggleEnabled();
+        view.showSubtitlesEnabled(subtitlesEnabled);
     }
 
     private void stopAndExit() {
