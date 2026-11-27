@@ -31,6 +31,7 @@ public class CommandLineController {
     private boolean helpRequested;
     private boolean audioRequested;
     private boolean maximiseRequested;
+    private boolean subtitleRequested;
     private Integer displayId;
     private File videoFile; //stores the video file we give it 
     private String errorMessage;
@@ -72,6 +73,11 @@ public class CommandLineController {
         return maximiseRequested;
     }
     
+    public boolean isSubtitleRequested() {
+    	return subtitleRequested;
+    }
+    
+    
     public List<FrameProcessor> getFrameProcessors() {
     	return List.copyOf(frameProcessors);
     }
@@ -93,6 +99,8 @@ public class CommandLineController {
                 setDisplayId(1);
             } else if ("-2".equals(arg) || "--monitor-2".equals(arg)) {
             	setDisplayId(2);
+            } else if ("-S".equals(arg) || "--subtitle-frames".equals(arg)) {
+                subtitleRequested = true;
             } else if (parseFrameProcessorOption(arg)) {
             	// Frame processor option was recognised and added. 
             } else if (arg.startsWith("-")) {
@@ -252,6 +260,7 @@ public class CommandLineController {
         System.out.println("  -m, --mottle-frames    Add cloudy emulsion mottling");
         System.out.println("  -b, --bleed-frames     Bleed light into frames");
         System.out.println("  -p, --pepper-frames    Pepper frames with dark spots/blotches");
+        System.out.println("  -S, --subtitle-frames  Add speech-to-text subtitles to frames");
         System.out.println();
 
         System.out.println("Frame processors are applied in command-line order and may be repeated.");

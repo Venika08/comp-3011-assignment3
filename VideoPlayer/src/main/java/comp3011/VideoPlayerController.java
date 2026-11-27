@@ -32,12 +32,15 @@ public class VideoPlayerController {
     private final VideoPlayerModel model;
     private final VideoPlayerView view;
     private final BiConsumer<Integer, Integer> videoSizeChangedHandler;
-
+    private boolean subtitlesEnabled;
+    
     public VideoPlayerController(
+    		boolean subtitlesEnabled,
             boolean audioEnabled,
             List<FrameProcessor> frameProcessors,
             BiConsumer<Integer, Integer> videoSizeChangedHandler) {
         this.view = new VideoPlayerView();
+        this.subtitlesEnabled = subtitlesEnabled;
         this.videoSizeChangedHandler = videoSizeChangedHandler;
         model = new VideoPlayerModel(
                 audioEnabled,
@@ -112,6 +115,10 @@ public class VideoPlayerController {
 
     private void toggleAudioOutput() {
         model.toggleAudioOutput();
+    }
+    
+    private void toggleSubtitles() {
+    	subtitlesEnabled =!subtitlesEnabled;
     }
 
     private void stopAndExit() {

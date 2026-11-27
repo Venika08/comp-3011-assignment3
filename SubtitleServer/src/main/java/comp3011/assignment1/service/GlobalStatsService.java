@@ -14,6 +14,7 @@ public class GlobalStatsService {
 	
 	private long inputTokens;
 	private long outputTokens;
+	private double usageSeconds;
 	
 	/**
 	 * Adds token usage from one completed time. 
@@ -42,6 +43,14 @@ public class GlobalStatsService {
 	 */
 	public synchronized GlobalStatsResponse getGlobalStats() {
 		return new GlobalStatsResponse(inputTokens, outputTokens);
+	}
+	
+	public synchronized void recordUsageSeconds(double seconds) {
+	    usageSeconds += seconds;
+	}
+
+	public synchronized double getUsageSeconds() {
+	    return usageSeconds;
 	}
 
 }
