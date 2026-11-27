@@ -61,20 +61,54 @@ public class SubtitleClient {
                             .POST(body)
                             .build();
 
-            HttpResponse<String> response =
-                    httpClient.send(
-                            request,
-                            HttpResponse.BodyHandlers.ofString());
+            int attempt = 0;
+            int maxAttempts = 60;
 
-            if (response.statusCode() != 200) {
-                throw new IOException(
-                        "Subtitle server returned status "
-                        + response.statusCode());
+            while (attempt < maxAttempts) {
+                attempt++;
+
+                try {
+                    HttpResponse<String> response =
+                            httpClient.send(
+                                    request,
+                                    HttpResponse.BodyHandlers.ofString());
+
+                    if (response.statusCode() == 200) {
+                        return objectMapper.readValue(
+                                response.body(),
+                                SubtitleApiResponse.class);
+                    }
+
+                    if (response.statusCode() >= 500
+                            && attempt < maxAttempts) {
+
+                        System.out.println(
+                                "Subtitle service unavailable. "
+                                + "Retrying...");
+
+                        Thread.sleep(2000);
+                        continue;
+                    }
+
+                    throw new IOException(
+                            "Subtitle server returned status "
+                            + response.statusCode());
+
+                } catch (IOException e) {
+
+                    if (attempt >= maxAttempts) {
+                        throw e;
+                    }
+
+                    System.out.println(
+                            "Subtitle connection failed. Retrying...");
+
+                    Thread.sleep(2000);
+                }
             }
 
-            return objectMapper.readValue(
-                    response.body(),
-                    SubtitleApiResponse.class);
+            throw new IOException(
+                    "Unable to retrieve subtitles after retries.");
 
         } finally {
             Files.deleteIfExists(audioFile.toPath());
